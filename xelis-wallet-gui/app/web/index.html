@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Hash'n'Omletz — Xelis Wallet</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div class="hdr">
+    <span class="t-main">HASH'N'OMLETZ</span>
+    <span class="t-sub">XELIS WALLET</span>
+    <span class="status-dot" id="statusDot"></span>
+  </div>
+
+  <div class="scroll">
+    <div class="card verify-box" id="verifyBox">
+      <div class="sec-head">WALLET VERIFICATION</div>
+      <div id="verifyStatus">checking for the official xelis_wallet release&hellip;</div>
+    </div>
+
+    <!-- picker: choose an existing wallet or create a new one -->
+    <div class="card" id="pickerCard" style="display:none">
+      <div class="sec-head">WALLET</div>
+      <div class="row">
+        <label>MODE</label>
+        <select id="mode">
+          <option value="existing">Open existing</option>
+          <option value="new">Create new</option>
+        </select>
+      </div>
+      <div class="row" id="existingRow">
+        <label>WALLET</label>
+        <select id="walletPicker"></select>
+      </div>
+      <div class="row" id="newNameRow" style="display:none">
+        <label>NAME</label>
+        <input id="newName" placeholder="e.g. main">
+      </div>
+      <div class="row"><label>PASSWORD</label><input id="password" type="password" placeholder="wallet password"></div>
+      <div class="row"><label>NETWORK</label>
+        <select id="network">
+          <option value="mainnet">Mainnet</option>
+          <option value="testnet">Testnet</option>
+          <option value="devnet">Devnet</option>
+        </select>
+      </div>
+      <div class="row checkbox">
+        <input type="checkbox" id="offline" checked>
+        <span>Offline mode (don't sync with a daemon yet — no publicly-reachable Xelis daemon is set up for this toolkit as of this build; leave checked unless you're running your own node)</span>
+      </div>
+      <div class="row" id="daemonRow" style="display:none">
+        <label>DAEMON</label>
+        <input id="daemonAddress" placeholder="http://host:8080">
+      </div>
+      <div class="row">
+        <label></label>
+        <button class="btn" id="openBtn" disabled>OPEN WALLET</button>
+      </div>
+      <div id="pickerError" class="seed-warn"></div>
+    </div>
+
+    <!-- open wallet view -->
+    <div class="card" id="walletCard" style="display:none">
+      <div class="sec-head">WALLET <span class="dim" id="walletName"></span></div>
+      <div class="tabbar">
+        <button class="tab-btn active" data-tab="overview">OVERVIEW</button>
+        <button class="tab-btn" data-tab="send">SEND</button>
+        <button class="tab-btn" data-tab="history">HISTORY</button>
+      </div>
+
+      <div class="tab-panel" id="tabOverview">
+        <div class="row"><label>ADDRESS</label></div>
+        <div class="address-box" id="addressBox" title="click to copy"></div>
+        <div class="stats" style="margin-top:10px">
+          <div class="stat-box"><div class="stat-val amber" id="sBalance">0</div><div class="stat-lbl">BALANCE (XEL)</div></div>
+          <div class="stat-box"><div class="stat-val" id="sTopo">0</div><div class="stat-lbl">TOPOHEIGHT</div></div>
+          <div class="stat-box"><div class="stat-val" id="sOnline">OFFLINE</div><div class="stat-lbl">STATUS</div></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <label></label>
+          <button class="btn" id="showSeedBtn">BACK UP SEED PHRASE</button>
+          <button class="btn stop" id="closeBtn">CLOSE WALLET</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tabSend" style="display:none">
+        <div class="row"><label>TO ADDRESS</label><input id="sendTo" placeholder="xel:... or xet:..."></div>
+        <div class="row"><label>AMOUNT</label><input id="sendAmount" class="narrow" placeholder="0.00" style="flex:0 0 160px"><span class="dim" style="margin-left:6px">XEL</span></div>
+        <div class="row"><label>EST. FEE</label><span id="sendFeePreview" class="dim">—</span></div>
+        <div class="row checkbox">
+          <input type="checkbox" id="sendConfirm">
+          <span>I have double-checked the recipient address. Sent XEL cannot be recovered if this is wrong.</span>
+        </div>
+        <div class="row"><label></label><button class="btn" id="sendBtn" disabled>SEND</button></div>
+        <div id="sendError" class="seed-warn"></div>
+        <div id="sendResult" class="dim" style="font-size:11px;margin-top:6px"></div>
+      </div>
+
+      <div class="tab-panel" id="tabHistory" style="display:none">
+        <div class="row"><label></label><button class="btn" id="refreshHistoryBtn">REFRESH</button></div>
+        <div id="historyList" class="dim" style="font-size:11px">no transactions loaded yet</div>
+      </div>
+    </div>
+
+    <!-- seed reveal modal (inline card, not a real modal -- kept simple) -->
+    <div class="card seed-box" id="seedCard" style="display:none">
+      <div class="sec-head">SEED PHRASE BACKUP</div>
+      <div id="seedStep1">
+        <p class="seed-warn">Re-enter your wallet password to reveal your seed phrase. Anyone with this phrase can spend your funds — never share it, never type it into a website, never screenshot it.</p>
+        <div class="row"><label>PASSWORD</label><input id="seedPassword" type="password"></div>
+        <div class="row"><label></label><button class="btn" id="revealBtn">REVEAL</button><button class="btn stop" id="seedCancelBtn">CANCEL</button></div>
+        <div id="seedError" class="seed-warn"></div>
+      </div>
+      <div id="seedStep2" style="display:none">
+        <p class="seed-warn">Write this down and store it somewhere safe and offline. This is the ONLY way to recover your funds if you lose access to this wallet. It will not be shown again unless you use this same 'back up seed phrase' option.</p>
+        <div class="seed-words" id="seedWords"></div>
+        <div class="row checkbox">
+          <input type="checkbox" id="seedConfirm">
+          <span>I have written down my seed phrase and stored it somewhere safe</span>
+        </div>
+        <div class="row"><label></label><button class="btn" id="seedDoneBtn" disabled>DONE</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="log"></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

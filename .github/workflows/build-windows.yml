@@ -1,0 +1,84 @@
+name: Build Windows executables
+
+# Builds both GUI tools' single-file .exe on a real Windows runner -- PyInstaller can't cross-compile a
+# Windows build from Linux/macOS, which is why this exists rather than just building locally. Runs on
+# every push/PR that touches either tool (so a packaging regression -- like the missing-OpenConsole.exe
+# bug found manually during development -- gets caught by CI next time, not by another round of manual
+# Windows testing), and attaches both exes to a GitHub Release when a version tag is pushed.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths:
+      - 'rigel-miner-gui/**'
+      - 'xelis-wallet-gui/**'
+      - '.github/workflows/build-windows.yml'
+  pull_request:
+    paths:
+      - 'rigel-miner-gui/**'
+      - 'xelis-wallet-gui/**'
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: rigel-miner-gui
+            dir: rigel-miner-gui
+            exe: HashNOmletz-RigelMiner.exe
+          - name: xelis-wallet-gui
+            dir: xelis-wallet-gui
+            exe: HashNOmletz-XelisWallet.exe
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'   # pinned rather than 3.14+ -- both tools needed extra pins
+                                    # (standard-imghdr, setuptools<...) to cope with stdlib/packaging
+                                    # changes on very new Python versions; 3.12 avoids that class of
+                                    # surprise in CI until those pins are revisited deliberately.
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.dir }}
+        run: |
+          python -m venv venv
+          venv\Scripts\pip install --upgrade pip
+          venv\Scripts\pip install -r requirements.txt
+
+      - name: Build with PyInstaller
+        working-directory: ${{ matrix.dir }}
+        run: venv\Scripts\pyinstaller build_windows.spec
+
+      - name: Verify the exe was actually produced
+        working-directory: ${{ matrix.dir }}
+        run: |
+          if (-not (Test-Path "dist\${{ matrix.exe }}")) {
+            Write-Error "dist\${{ matrix.exe }} was not produced -- build silently failed to output the expected file"
+            exit 1
+          }
+          Get-Item "dist\${{ matrix.exe }}" | Select-Object Name, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.dir }}/dist/${{ matrix.exe }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Attach exes to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/rigel-miner-gui/HashNOmletz-RigelMiner.exe
+            artifacts/xelis-wallet-gui/HashNOmletz-XelisWallet.exe

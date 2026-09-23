@@ -1,0 +1,13 @@
+pywebview==6.2.1
+pgpy>=0.6.0
+# pgpy imports the stdlib `imghdr` module, removed in Python 3.14 -- confirmed live on Windows
+# (2026-09-23) that pgpy breaks on a fresh 3.14 venv without this. Applies regardless of PTY backend.
+standard-imghdr; python_version >= "3.13"
+pexpect>=4.9; sys_platform != "win32"
+# 2026-09-23: switched the Windows PTY backend from wexpect to pywinpty (see pty_compat.py's module
+# docstring for why -- wexpect confirmed dead-locked at 0% CPU on real Windows hardware). wexpect's
+# setuptools<81 pin (it needs pkg_resources, dropped in setuptools 84+) no longer applies now that
+# wexpect is gone, but pywinpty may have its own constraints we haven't hit yet -- if install/import
+# fails on a fresh venv, check for a similar pkg_resources/imghdr-shaped gap first.
+pywinpty>=2.0; sys_platform == "win32"
+pyinstaller>=6.0

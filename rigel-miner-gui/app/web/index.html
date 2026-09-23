@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Hash'n'Omletz — Rigel Miner</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div class="hdr">
+    <span class="t-main">HASH'N'OMLETZ</span>
+    <span class="t-sub">RIGEL MINER</span>
+    <span class="status-dot" id="statusDot"></span>
+  </div>
+
+  <div class="scroll">
+    <div class="card verify-box" id="verifyBox">
+      <div class="sec-head">MINER VERIFICATION</div>
+      <div id="verifyStatus">checking for the official Rigel release&hellip;</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">CONFIGURATION</div>
+      <div class="row">
+        <label>ALGORITHM</label>
+        <select id="algo"></select>
+      </div>
+      <div class="row"><label>POOL URL</label><input id="poolUrl" placeholder="stratum+tcp://host:port"></div>
+      <div class="row"><label>USERNAME</label><input id="username" placeholder="wallet address (or address.worker)"></div>
+      <div class="row"><label>WORKER</label><input id="worker" placeholder="gui"><label class="hint">optional</label></div>
+      <div class="row"><label>PASSWORD</label><input id="password" placeholder="x"><label class="hint">optional</label></div>
+      <div class="row"><label>GPU DEVICES</label><input id="devices" placeholder="0,1,2 (blank = all)"></div>
+      <div class="row">
+        <label></label>
+        <button class="btn" id="startBtn" disabled>START MINING</button>
+        <button class="btn stop" id="stopBtn" disabled>STOP</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">LIVE STATS</div>
+      <div class="stats" id="statsGrid">
+        <div class="stat-box"><div class="stat-val dim">—</div><div class="stat-lbl">WAITING</div></div>
+      </div>
+      <div class="dim" style="font-size:10px;margin-top:8px">
+        HASHRATE is what the pool is actually crediting (counts toward payout); SELF-REPORTED is Rigel's own figure, shown for comparison.
+      </div>
+    </div>
+
+    <div class="card" id="gpuCard" style="display:none">
+      <div class="sec-head">GPU</div>
+      <div id="gpuList"></div>
+    </div>
+  </div>
+
+  <div id="log"></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
