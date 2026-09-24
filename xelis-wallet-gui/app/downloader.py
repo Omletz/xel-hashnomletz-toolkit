@@ -7,6 +7,7 @@ import json
 import os
 import platform
 import ssl
+import sys
 import tarfile
 import urllib.request
 import zipfile
@@ -18,12 +19,29 @@ from verify import VerificationError, verify_release_asset
 REPO = "xelis-project/xelis-blockchain"
 API_LATEST = f"https://api.github.com/repos/{REPO}/releases/latest"
 UA = {"User-Agent": "hashnomletz-xelis-wallet-gui"}
+
+
+def _cacert_path() -> str:
+    """certifi.where() internally uses importlib.resources.files("certifi") to locate cacert.pem --
+    this is a known fragile path inside a PyInstaller onefile bundle (it depends on certifi's own
+    package-resource resolution working correctly against the frozen/extracted layout, which isn't
+    guaranteed just because the file was bundled via `datas=`). When frozen, read the file we bundled
+    ourselves straight out of sys._MEIPASS instead of trusting certifi's own resolution -- build_windows.spec
+    bundles it at exactly this path (datas=[(certifi.where(), 'certifi')]) for this reason. Falls back to
+    certifi.where() in normal (non-frozen) dev runs."""
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        bundled = os.path.join(sys._MEIPASS, "certifi", "cacert.pem")
+        if os.path.exists(bundled):
+            return bundled
+    return certifi.where()
+
+
 # Explicit cert bundle rather than trusting each machine's own OS cert store -- see the sibling
 # rigel-miner-gui/app/downloader.py for the real failure this fixes (a fresh Windows box surfaced
 # CERTIFICATE_VERIFY_FAILED as a generic download error indistinguishable from our own verification
 # failing). certifi's bundle is pinned by our own requirements.txt/build, so it can't drift the way a
 # stale/incomplete Windows root store can.
-_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
+_SSL_CONTEXT = ssl.create_default_context(cafile=_cacert_path())
 
 
 def _asset_name_for_platform() -> str:
