@@ -38,9 +38,11 @@ os.makedirs(WALLETS_DIR, exist_ok=True)
 os.makedirs(TABLES_DIR, exist_ok=True)
 
 DEFAULT_NETWORK = "mainnet"
-DEFAULT_DAEMON_ADDRESS = "http://127.0.0.1:8080"  # NOT yet a real, publicly-reachable endpoint for
-                                                    # outside miners -- see README. Editable in the UI,
-                                                    # same reasoning as the Rigel GUI's pool-URL field.
+# Confirmed live 2026-09-23: publicly reachable now, HTTPS via nginx+Cloudflare (same wildcard origin
+# cert, own rate-limit zone -- see the ops notes in project memory). Verified with a real get_info call
+# returning live mainnet chain data over this exact URL. Still editable in the UI, same reasoning as the
+# Rigel GUI's pool-URL field, in case someone wants to point at their own node instead.
+DEFAULT_DAEMON_ADDRESS = "https://xelis-daemon.hashnomletz.com"
 
 XEL_DECIMALS = 8
 NATIVE_ASSET = "0" * 64  # confirmed live: the native XEL asset ID for transfers/estimate_fees -- unlike
@@ -71,7 +73,8 @@ class Api:
         self.verify_failed: str | None = None
         self._log_lines: list[str] = []
         self._log_lock = threading.Lock()
-
+    def get_default_daemon_address(self):
+        return DEFAULT_DAEMON_ADDRESS
     def _log(self, msg: str):
         with self._log_lock:
             self._log_lines.append(msg)

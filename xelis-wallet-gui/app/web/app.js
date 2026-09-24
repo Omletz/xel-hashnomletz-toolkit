@@ -260,6 +260,7 @@ function startStatusPolling() {
 }
 
 window.addEventListener('pywebviewready', async () => {
+  document.getElementById('daemonAddress').value = await pywebview.api.get_default_daemon_address();
   document.getElementById('mode').addEventListener('change', onModeChange);
   document.getElementById('offline').addEventListener('change', onOfflineChange);
   document.getElementById('openBtn').addEventListener('click', openWallet);
