@@ -6,15 +6,24 @@ asset for the current OS automatically."""
 import json
 import os
 import platform
+import ssl
 import tarfile
 import urllib.request
 import zipfile
+
+import certifi
 
 from verify import VerificationError, verify_release_asset
 
 REPO = "xelis-project/xelis-blockchain"
 API_LATEST = f"https://api.github.com/repos/{REPO}/releases/latest"
 UA = {"User-Agent": "hashnomletz-xelis-wallet-gui"}
+# Explicit cert bundle rather than trusting each machine's own OS cert store -- see the sibling
+# rigel-miner-gui/app/downloader.py for the real failure this fixes (a fresh Windows box surfaced
+# CERTIFICATE_VERIFY_FAILED as a generic download error indistinguishable from our own verification
+# failing). certifi's bundle is pinned by our own requirements.txt/build, so it can't drift the way a
+# stale/incomplete Windows root store can.
+_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 
 def _asset_name_for_platform() -> str:

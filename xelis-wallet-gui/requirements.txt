@@ -1,4 +1,5 @@
 pywebview==6.2.1
+certifi
 pgpy>=0.6.0
 # pgpy imports the stdlib `imghdr` module, removed in Python 3.14 -- confirmed live on Windows
 # (2026-09-23) that pgpy breaks on a fresh 3.14 venv without this. Applies regardless of PTY backend.

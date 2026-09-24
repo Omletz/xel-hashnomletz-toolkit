@@ -4,15 +4,24 @@ trust-on-first-use pinning model this uses instead. Picks the asset for the curr
 import json
 import os
 import platform
+import ssl
 import tarfile
 import urllib.request
 import zipfile
+
+import certifi
 
 from verify import VerificationError, verify_release_asset
 
 REPO = "rigelminer/rigel"
 API_LATEST = f"https://api.github.com/repos/{REPO}/releases/latest"
 UA = {"User-Agent": "hashnomletz-rigel-gui"}
+# Explicit cert bundle rather than trusting each machine's own OS cert store -- confirmed 2026-09-23 that
+# a real outside miner hit "CERTIFICATE_VERIFY_FAILED" on a fresh Windows box, which urllib surfaced as a
+# generic download error that looked like our own SHA256 verification failing (it wasn't -- see verify.py).
+# certifi's bundle is pinned by our own requirements.txt/build, so this can't drift out from under us the
+# way a stale/incomplete Windows root store can.
+_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 
 
 def _asset_name_for_platform(version: str) -> str:

@@ -1,2 +1,3 @@
 pywebview==6.2.1
+certifi
 pyinstaller>=6.0

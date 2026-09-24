@@ -32,13 +32,19 @@ try:
 except ImportError:
     _winpty_binaries = []  # building on non-Windows for some reason; nothing to bundle
 
+# certifi's cacert.pem: bundled explicitly rather than relying on PyInstaller's static analysis to find it
+# (it's a data file, not an import, so hiddenimports alone won't pull it in). app/downloader.py uses this
+# bundle instead of the OS cert store for GitHub downloads -- see its module docstring for the real
+# outside-miner failure (CERTIFICATE_VERIFY_FAILED on a fresh Windows box) this closes.
+import certifi
+
 block_cipher = None
 a = Analysis(
     ['app/main.py'],
     pathex=['app'],
-    datas=[('app/web', 'web')],
+    datas=[('app/web', 'web'), (certifi.where(), 'certifi')],
     binaries=_winpty_binaries,
-    hiddenimports=['pgpy', 'winpty'],
+    hiddenimports=['pgpy', 'winpty', 'certifi'],
 )
 pyz = PYZ(a.pure)
 exe = EXE(
